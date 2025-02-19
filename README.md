@@ -1,3 +1,8 @@
+# Buzzer
+
+Source code for EMNLP 2024Findings paper: Code Membership Inference for Detecting Unauthorized Data Use in
+Code Pre-trained Language Models.
+
 ### step1 pretrain model
 - pretrain target model
 - pretrain shadow model
