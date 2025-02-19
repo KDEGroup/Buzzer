@@ -261,20 +261,6 @@ class CsnMiaData:
         non_utils = csn_all[240000:] # for training inference model
         mem_test = mem_pretrain[:10000] # for testing
         
-        '''
-        数据描述：
-        前10w条数据用来预训练目标模型，其中划分10000条出来作为测试
-        第10w-15w用来作为影子模型的训练数据，
-        第15w-18w暂时没用
-        第18w-19w用来作为非成员变量的测试数据
-        第19w-24w用来作为矫正模型的训练数据
-        第24w之后作为分类模型的非成员变量训练数据。
-        
-        分类模型的训练数据：
-            非成员变量，也就是label为0的数据，来自non_utils
-            成员变量，也就是label为1的数据，白盒来自mem_pretrain，灰盒来自non_shadow
-        '''
-        
         json.dump(mem_pretrain, open(os.path.join(self.data_root, 'mem_pretrain.json'), 'w'), indent=1)
         json.dump(non_shadow, open(os.path.join(self.data_root, 'non_shadow.json'), 'w'), indent=1)
         json.dump(non_surrogate, open(os.path.join(self.data_root, 'non_surrogate.json'), 'w'), indent=1)

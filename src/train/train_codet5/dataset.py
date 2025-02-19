@@ -33,7 +33,6 @@ class CodeDataset(Dataset):
         self.split = split
         self.paths = {}
 
-        # dataset dir for files, all files in this dir meeting the filename will be used as dataset files
         self.dataset_dir = os.path.join(args.dataset_root, self.mode)
         self.csn_dataset = CsnMiaData()
         
@@ -132,7 +131,6 @@ class CodeDataset(Dataset):
             code_mask_start_id = 0
             
             if nl != "":
-                # index of nl start by 0, code begin after nl
                 nl_mask_num = int(nl_length * 0.15 / 3) 
                 if nl_mask_num == 0: nl_mask_num = 1
                 
@@ -166,7 +164,6 @@ class CodeDataset(Dataset):
             else:
                 inputs = nl + ['</s>'] + code_tokenized 
                 labels = [0] + labels
-            # breakpoint()
             return inputs, labels
 
         elif self.task == enums.TASK_MASK_IDENTIFER_PREDICTION:
@@ -189,12 +186,9 @@ class CodeDataset(Dataset):
                     if tmp_word == word:
                         code_tokenized[tmp_idx] = identifier_token
                 labels += identifier_token + ' ' + word + ' '
-                # labels.append({
-                #     identifier_token: word
-                # })
+
             labels = labels.strip()      
-            # identifier_with_idx.sort(key=lambda x: x[0])
-            # breakpoint()
+
             if nl == "":
                 inputs = code_tokenized
                 labels = labels.split(' ')
@@ -213,7 +207,6 @@ class CodeDataset(Dataset):
             
             
     def __len__(self):
-        # return 100
         return self.size
 
     def set_task(self, task):
@@ -245,7 +238,6 @@ def init_dataset(args, mode, task=None, language=None, split=None, clone_mapping
                           language=language,
                           split=split,
                           clone_mapping=clone_mapping)
-    # dataset.save()
     return dataset
 
 

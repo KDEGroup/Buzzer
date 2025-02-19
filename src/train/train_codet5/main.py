@@ -52,9 +52,6 @@ def pre_train(args,
     logger.info('*' * 100)
     logger.info('Initializing pre-training environments')
 
-    # --------------------------------------------------
-    # datasets
-    # --------------------------------------------------
     logger.info('-' * 100)
     logger.info('Loading and parsing datasets')
     
@@ -79,46 +76,27 @@ def pre_train(args,
         
     logger.info('Datasets loaded and parsed successfully')
 
-    # --------------------------------------------------
-    # vocabs
-    # --------------------------------------------------
-    # print(hasattr(dataset, 'docs'))
-
     logger.info('-' * 100)
     
 
-    # --------------------------------------------------
-    # Model
-    # --------------------------------------------------
     logger.info('-' * 100)
     logger.info('Building model')
     
-    config = T5Config.from_pretrained('/data/zs/LLM_Weight/codet5-base')
+    config = T5Config.from_pretrained('Salesforce/codet5-base')
     config.num_labels = 2
     
     model = CodeT5ForClassificationAndGeneration(config)
-    tokenizer = AutoTokenizer.from_pretrained('/data/zs/LLM_Weight/codet5-base', add_prefix_space=True)
-
-    # --------------------------------------------------
-    # pre-train
-    # --------------------------------------------------
+    tokenizer = AutoTokenizer.from_pretrained('Salesforce/codet5-base', add_prefix_space=True)
     logger.info(tasks)
     for task in tasks:
         logger.info('-' * 100)
         logger.info(f'Pre-training task: {task.upper()}')
-
-        # if isinstance(dataset, torch.utils.data.Subset):
-        #     dataset.dataset.set_task(task)
-        # else:
+        
         dataset.set_task(task)
-        #     # evalset = dataset.sub
         if task == enums.TASK_MASK_SPAN_PREDICTION:
-            # set model mode
             logger.info('-' * 100)
             model.set_model_mode(enums.MODEL_MODE_GEN)
-            # --------------------------------------------------
-            # trainer
-            # --------------------------------------------------
+
             logger.info('-' * 100)
             logger.info('Initializing the running configurations')
             training_args = Seq2SeqTrainingArguments(output_dir=os.path.join(args.pre_train_output_root, task),
@@ -164,9 +142,6 @@ def pre_train(args,
                                      callbacks=None)
             logger.info('Running configurations initialized successfully')
 
-            # --------------------------------------------------
-            # train
-            # --------------------------------------------------
             logger.info('-' * 100)
             logger.info(f'Start pre-training task: {task}')
             cap_result = trainer.train()
@@ -177,9 +152,7 @@ def pre_train(args,
             # set model mode
             logger.info('-' * 100)
             model.set_model_mode(enums.MODEL_MODE_CLS)
-            # --------------------------------------------------
-            # trainer
-            # --------------------------------------------------
+
             logger.info('-' * 100)
             logger.info('Initializing the running configurations')
             training_args = TrainingArguments(output_dir=os.path.join(args.pre_train_output_root, task),
@@ -227,24 +200,17 @@ def pre_train(args,
                                      callbacks=None)
             logger.info('Running configurations initialized successfully')
 
-            # --------------------------------------------------
-            # train
-            # --------------------------------------------------
             logger.info('-' * 100)
             logger.info(f'Start pre-training task: {task}')
-            # model device
             logger.info('Device: {}'.format(next(model.parameters()).device))
             mass_result = trainer.train()
             logger.info(f'Pre-training task {task} finished')
             trainer.save_model(os.path.join(args.model_root, task))
 
         elif task == enums.TASK_MASK_IDENTIFER_PREDICTION:
-            # set model mode
             logger.info('-' * 100)
             model.set_model_mode(enums.MODEL_MODE_GEN)
-            # --------------------------------------------------
-            # trainer
-            # --------------------------------------------------
+
             logger.info('-' * 100)
             logger.info('Initializing the running configurations')
             training_args = Seq2SeqTrainingArguments(output_dir=os.path.join(args.pre_train_output_root, task),
@@ -291,9 +257,6 @@ def pre_train(args,
             
             logger.info('Running configurations initialized successfully')
 
-            # --------------------------------------------------
-            # train
-            # --------------------------------------------------
             logger.info('-' * 100)
             logger.info(f'Start pre-training task: {task}')
             mnp_result = trainer.train()
@@ -301,14 +264,10 @@ def pre_train(args,
             trainer.save_model(os.path.join(args.model_root, task))
             
         elif task == enums.TASK_BIMODAL_DUAL_GENERATION:
-            # set model mode
             logger.info('-' * 100)
             
             model.set_model_mode(enums.MODEL_MODE_GEN)
             
-            # --------------------------------------------------
-            # trainer
-            # --------------------------------------------------
             logger.info('-' * 100)
             logger.info('Initializing the running configurations')
             training_args = Seq2SeqTrainingArguments(output_dir=os.path.join(args.pre_train_output_root, task),
@@ -354,9 +313,6 @@ def pre_train(args,
                          callbacks=None)
             logger.info('Running configurations initialized successfully')
 
-            # --------------------------------------------------
-            # train
-            # --------------------------------------------------
             logger.info('-' * 100)
             logger.info(f'Start pre-training task: {task}')
             mnp_result = trainer.train()
@@ -380,21 +336,14 @@ if __name__ == "__main__":
     
     set_seed()
 
-    # define and make dirs
-    # Root directory for the output of this run
     main_args.output_root = os.path.join(
         '.',
         'output/codet5_pretrain',
         '{}'.format(main_args.model_name))
-    # Root for outputs during pre-training
     main_args.pre_train_output_root = os.path.join(main_args.output_root, 'pre_train')
-    # Root for saving checkpoints
     main_args.checkpoint_root = os.path.join(main_args.output_root, 'checkpoints')
-    # Root for saving models
     main_args.model_root = os.path.join(main_args.output_root, 'models')
-    # Root for saving vocabs
     main_args.vocab_root = os.path.join(main_args.output_root, 'vocabs')
-    # Rot for tensorboard
     main_args.tensor_board_root = os.path.join(main_args.output_root, 'runs')
     for d in [main_args.checkpoint_root, main_args.model_root, main_args.vocab_root, main_args.tensor_board_root,
               main_args.dataset_save_dir, main_args.vocab_save_dir]:

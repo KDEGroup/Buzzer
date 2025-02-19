@@ -110,7 +110,7 @@ model_arguments:
   attn_implementation: 
 
 tokenizer:
-  tokenizer_path: cache/LLM_Weight/codellama-7b-base-hf
+  tokenizer_path: codellama/codellama-7b-base-hf
 
 # Deepspeed config
 deepspeed_config:

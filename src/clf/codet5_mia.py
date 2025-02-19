@@ -285,14 +285,6 @@ class SignalDataset(torch.utils.data.Dataset):
             non_msp_attn = non_msp_attn.view(bs, -1)
             non_it_attn = non_it_attn.view(bs, -1)
             
-            # # breakpoint()
-            # mem_length = mem_attn.sum(dim=1).view(-1)    
-            # non_length = non_attn.sum(dim=1).view(-1)
-
-            # if self.model_type == 'lstm':
-            #     mem = pack_padded_sequence(mem, mem_length, batch_first=True, enforce_sorted=False)
-            #     non = pack_padded_sequence(non, non_length, batch_first=True, enforce_sorted=False)
-
             model_inputs['mem_bdg_input'] = mem_bdg
             model_inputs['mem_mip_input'] = mem_mip
             model_inputs['mem_msp_input'] = mem_msp
@@ -337,11 +329,6 @@ class SignalDataset(torch.utils.data.Dataset):
             mem_msp_attn = mem_msp_attn.view(bs, -1)
             mem_it_attn = mem_it_attn.view(bs, -1)
             
-            # mem_length = mem_attn.sum(dim=1).view(-1)  
-              
-            # if self.model_type == 'lstm':
-            #     mem = pack_padded_sequence(mem, mem_length, batch_first=True, enforce_sorted=False)
-
             labels = torch.tensor(labels)
             model_inputs['mem_bdg_input'] = mem_bdg
             model_inputs['mem_mip_input'] = mem_mip
@@ -392,7 +379,7 @@ if __name__ == "__main__":
         train_non_name = 'wb_non_train'
         train_from = 'target'
         test_from = 'target'
-    elif args.mia_type == 'gb':
+    elif args.mia_type == 'bb':
         train_mem_name = 'non_shadow'
         train_non_name = 'non_utils'
         train_from = 'target'

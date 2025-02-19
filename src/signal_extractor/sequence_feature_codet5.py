@@ -1,25 +1,15 @@
-import copy
-# from data.data_utils import *
-# from data.asts.ast_parser import *
-
-from typing import List, Dict
-from loguru import logger
 
 import torch
 from tqdm import tqdm
 
-from pathlib import Path
-import re
 import numpy as np
-import pandas as pd
-from transformers import RobertaModel, AutoTokenizer, pipeline, RobertaForMaskedLM, RobertaTokenizer, RobertaConfig
-from more_itertools import chunked
-import torch.multiprocessing as mp
+
+from typing import List, Dict
+
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from torch.utils.data import Dataset, DataLoader, TensorDataset, SequentialSampler
+from torch.utils.data import SequentialSampler
 
-import random
 from heapq import nlargest
 import torch.nn.functional as F
 
@@ -119,9 +109,7 @@ class Codet5NtimesMSP(Codet5Feature):
     
     def compute_loss(self, model, inputs):
         labels = inputs["labels"]
-        # breakpoint()
         outputs = model(**inputs)
-        # breakpoint()
         logits = outputs.get("logits")
         
         shift_logits = logits[:, :-1, :].contiguous()
@@ -132,7 +120,6 @@ class Codet5NtimesMSP(Codet5Feature):
         bs = logits.size(0)
         loss = loss.view(bs, -1)
         loss = loss.sum(dim=1) / loss.size(1)
-        # breakpoint()
         return loss
     
     def get_feature_score(self):
@@ -218,8 +205,6 @@ class Codet5NtimesMSP(Codet5Feature):
                 input_ids_all.append(model_inputs['decoder_input_ids'][:, 1:].cpu())
                 attention_masks.append(model_inputs['decoder_attention_mask'][:, 1:].cpu())
                 bar.update(1)    
-        # holder.sort(key=lambda x:len(x['code']))
-        # breakpoint()
         attention_masks = np.vstack(attention_masks)
         input_ids_all = np.vstack(input_ids_all)
         
@@ -248,9 +233,6 @@ class Codet5MIPLoss(Codet5Feature):
         self.caliberate_model.mode = 'generation'
         self.feature = feature
         self.n = 1
-        '''
-        这个东西是确定的，因此只执行一次
-        '''
 
     def format_input(self, code_tokenized, identifiers):
         identifier_with_idx = []
@@ -281,9 +263,7 @@ class Codet5MIPLoss(Codet5Feature):
     
     def compute_loss(self, model, inputs):
         labels = inputs["labels"]
-        # breakpoint()
         outputs = model(**inputs)
-        # breakpoint()
         logits = outputs.get("logits")
         
         shift_logits = logits[:, :-1, :].contiguous()
@@ -293,8 +273,6 @@ class Codet5MIPLoss(Codet5Feature):
         loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
         bs = logits.size(0)
         loss = loss.view(bs, -1)
-        # loss = loss.sum(dim=1) / loss.size(1)
-        # breakpoint()
         return loss
     
     def get_feature_score(self):
@@ -360,11 +338,9 @@ class Codet5MIPLoss(Codet5Feature):
                 model_inputs['labels'] = torch.tensor(decoder_input['input_ids']).to(self.device)
                 model_inputs['labels'][model_inputs['labels'] == self.tokenizer.pad_token_id] = -100
                 model_inputs['return_dict'] = True
-                # breakpoint()
                 tar_loss = self.compute_loss(self.target_model, model_inputs)
                 cal_loss = self.compute_loss(self.caliberate_model, model_inputs)
                 
-                # print(batch_idx, self.args.batch_size * batch_idx + cur_bs, i)
                 target_feature_score[batch_idx : batch_idx + cur_bs, :] = tar_loss.cpu()
                 caliberate_feature_score[batch_idx : batch_idx + cur_bs, :] = cal_loss.cpu()
                 
@@ -402,9 +378,7 @@ class Codet5BDGLoss(Codet5Feature):
     
     def compute_loss(self, model, inputs):
         labels = inputs["labels"]
-        # breakpoint()
         outputs = model(**inputs)
-        # breakpoint()
         logits = outputs.get("logits")
         
         shift_logits = logits[:, :-1, :].contiguous()
@@ -414,8 +388,6 @@ class Codet5BDGLoss(Codet5Feature):
         loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
         bs = logits.size(0)
         loss = loss.view(bs, -1)
-        # loss = loss.sum(dim=1) / loss.size(1)
-        # breakpoint()
         return loss
     
     def get_feature_score(self):
@@ -478,19 +450,15 @@ class Codet5BDGLoss(Codet5Feature):
                 model_inputs['labels'] = torch.tensor(decoder_input['input_ids']).to(self.device)
                 model_inputs['labels'][model_inputs['labels'] == self.tokenizer.pad_token_id] = -100
                 model_inputs['return_dict'] = True
-                # breakpoint()
                 tar_loss = self.compute_loss(self.target_model, model_inputs)
                 cal_loss = self.compute_loss(self.caliberate_model, model_inputs)
                 
-                # print(batch_idx, self.args.batch_size * batch_idx + cur_bs, i)
                 target_feature_score[batch_idx : batch_idx + cur_bs, :] = tar_loss.cpu()
                 caliberate_feature_score[batch_idx : batch_idx + cur_bs, :] = cal_loss.cpu()
                 
-                # breakpoint()
                 input_ids_all.append(model_inputs['decoder_input_ids'][:, 1:].cpu())
                 attention_masks.append(model_inputs['decoder_attention_mask'][:, 1:].cpu())
                 bar.update(1)    
-        # holder.sort(key=lambda x:len(x['code']))
         
         attention_masks = np.vstack(attention_masks)
         input_ids_all = np.vstack(input_ids_all)
@@ -605,19 +573,15 @@ class Codet5ITLoss(Codet5Feature):
                 
                 model_inputs['labels'][special_tokens_mask] = -100
                 model_inputs['return_dict'] = True
-                # breakpoint()
                 tar_loss = self.compute_loss(self.target_model, model_inputs).view(-1, 1)
                 cal_loss = self.compute_loss(self.caliberate_model, model_inputs).view(-1, 1)
-                # breakpoint()
-                # print(batch_idx, self.args.batch_size * batch_idx + cur_bs, i)
+
                 target_feature_score[batch_start : batch_start + cur_bs, :] = tar_loss.cpu()
                 caliberate_feature_score[batch_start : batch_start + cur_bs, :] = cal_loss.cpu()
                 
-                # breakpoint()
                 input_ids_all.append(model_inputs['input_ids'].cpu())
                 attention_masks.append(model_inputs['attention_mask'].cpu())
                 bar.update(1)    
-        # holder.sort(key=lambda x:len(x['code']))
         
         attention_masks = np.vstack(attention_masks)
         input_ids_all = np.vstack(input_ids_all)

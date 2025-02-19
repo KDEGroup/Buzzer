@@ -72,7 +72,6 @@ class CodeTrainer(Seq2SeqTrainer):
         
         # forward pass
         outputs = model(**inputs)
-        # logger.info(outputs)
         
         logits = outputs.get("logits")
         shift_logits = logits[:, :-1, :].contiguous()
@@ -144,17 +143,12 @@ class CodeCLSTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         labels = inputs.pop("labels")
         
-        # forward pass
         outputs = model(**inputs)
-        # logger.info(outputs)
         
         logits = outputs.get("logits")
-        # # compute custom loss (suppose one has 3 labels with different weights)
-        # shift_logits = logits[:, :-1, :].contiguous()
-        # shift_labels = labels[:, 1:].contiguous()
+
         loss_fct = torch.nn.CrossEntropyLoss()
         
-        # breakpoint()
         
         loss = loss_fct(logits.view(-1, logits.size(-1)), labels.view(-1))
         return (loss, logits) if return_outputs else loss

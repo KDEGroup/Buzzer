@@ -73,14 +73,14 @@ def pre_train(args,
     logger.info('Building model')
     
 
-    tokenizer = AutoTokenizer.from_pretrained('/data/zs/LLM_Weight/codebert-base', add_prefix_space=True)
+    tokenizer = AutoTokenizer.from_pretrained('microsoft/codebert-base', add_prefix_space=True)
     
     if args.do_pretrain:        
-        generator_config = RobertaConfig.from_pretrained('/data/zs/LLM_Weight/roberta-base')
+        generator_config = RobertaConfig.from_pretrained('FacebookAI/roberta-base')
         generator_config.num_hidden_layers = 4
-        generator = MaskGenerator.from_pretrained('/data/zs/LLM_Weight/roberta-base', config=generator_config)
+        generator = MaskGenerator.from_pretrained('FacebookAI/roberta-base', config=generator_config)
         
-        codebert_config = RobertaConfig.from_pretrained('/data/zs/LLM_Weight/codebert-base')
+        codebert_config = RobertaConfig.from_pretrained('microsoft/codebert-base')
         codebert_config.num_labels = 2
         codebert_model = CodeBERTForClassification(codebert_config, generator)
         

@@ -31,8 +31,6 @@ def collate_fn(batch, args, task, tokenizer):
     
     elif task == enums.TASK_IDENTIFIER_TAGGING:
         inputs, labels = map(list, zip(*batch))
-        # logger.info(code)
-        # logger.info(nl)
         encoder_input = tokenizer(text=inputs, is_split_into_words=True, add_special_tokens=True,
                           padding='max_length', truncation=True, max_length=512)
         '''
@@ -90,30 +88,18 @@ def collate_fn(batch, args, task, tokenizer):
     model_inputs['input_ids'] = torch.tensor(encoder_input['input_ids'])
     model_inputs['attention_mask'] = torch.tensor(encoder_input['attention_mask'])
     
-    # encoder_input_batch_max_len = model_inputs['attention_mask'].sum(dim=1).max()
-    # model_inputs['input_ids'] = model_inputs['input_ids'][:, :encoder_input_batch_max_len]
-    # model_inputs['attention_mask'] = model_inputs['attention_mask'][:, :encoder_input_batch_max_len]
-    
     if decoder_input is not None:
         model_inputs['decoder_input_ids'] = torch.tensor(decoder_input['input_ids'])
         model_inputs['decoder_attention_mask'] = torch.tensor(decoder_input['attention_mask'])
         model_inputs['labels'] = torch.tensor(decoder_input['input_ids'])
         model_inputs['labels'][model_inputs['labels'] == tokenizer.pad_token_id] = -100
         
-        # decoder_input_batch_max_len = model_inputs['decoder_attention_mask'].sum(dim=1).max()
-        # model_inputs['decoder_input_ids'] = model_inputs['decoder_input_ids'][:, :decoder_input_batch_max_len]
-        # model_inputs['decoder_attention_mask'] = model_inputs['decoder_attention_mask'][:, :decoder_input_batch_max_len]
-        # model_inputs['labels'] = model_inputs['labels'][:, :decoder_input_batch_max_len]
-        
     if model_labels is not None:
         model_inputs['labels'] = torch.tensor(model_labels)
-        # model_inputs['labels'] = model_inputs['labels'][:, :encoder_input_batch_max_len]
         
         special_tokens_mask = torch.full(model_inputs['input_ids'].shape, False, dtype=torch.bool)
         for sp_id in special_token_indices:
             special_tokens_mask = special_tokens_mask | (model_inputs['input_ids']==sp_id)
         model_inputs['labels'][special_tokens_mask] = -100
         
-    # logger.info(model_inputs)
-    # breakpoint()
     return model_inputs

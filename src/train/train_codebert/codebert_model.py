@@ -183,9 +183,7 @@ class CodeBERTForClassification(PreTrainedModel):
             mlm_gen_logits = mlm_gen_logits[mlm_mask, :]
             
             generator_loss = mlm_gen_output.loss
-            
-            # breakpoint()
-            
+                        
             with torch.no_grad():
                 pred_toks = self.sample(mlm_gen_logits) # ( #mlm_positions, )
                 # sample random tokens

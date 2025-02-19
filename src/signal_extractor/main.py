@@ -52,16 +52,10 @@ if __name__ == "__main__":
         torch.distributed.init_process_group(backend='nccl', world_size=torch.cuda.device_count())
             
     
-    target_tokenizer = RobertaTokenizer.from_pretrained('/data/zs/LLM_Weight/codebert-base')
+    target_tokenizer = RobertaTokenizer.from_pretrained('microsoft/codebert-base')
     
     if args.do_seq_fea:
-        config = RobertaConfig.from_pretrained('/data/zs/LLM_Weight/roberta-base')
-        # if args.seq_fea_name != 'loss_each' and args.seq_fea_name != 'mask_each':
-        #     shadow_model = RobertaModel(config)
-        #     shadow_model.load_state_dict(torch.load(args.shadow_path))
-                
-        # shadow_model = CodeBERTForClassification.from_pretrained(args.shadow_path, config=config)
-        # shadow_model = shadow_model.encoder
+        config = RobertaConfig.from_pretrained('FacebookAI/roberta-base')
         
         print('loading data...')
         data = CsnMiaData(args, target_tokenizer).data(f'{args.data_name}')
@@ -69,7 +63,6 @@ if __name__ == "__main__":
             
         
         if args.seq_fea_name == 'ntimes_mlm_loss':
-            # breakpoint()
             config = RobertaConfig.from_pretrained(args.shadow_path)
             try:
                 shadow_model = CodeBERTForClassification.from_pretrained(args.shadow_path, config=config)
@@ -87,32 +80,29 @@ if __name__ == "__main__":
             sf = NtimesMLMLoss(args, target_tokenizer, shadow_model, data, caliberate_model)
         
         elif args.seq_fea_name == 'ntimes_rtd_loss':
-            # breakpoint()
-            generator_config = RobertaConfig.from_pretrained('/data/zs/LLM_Weight/roberta-base')
+            generator_config = RobertaConfig.from_pretrained('FacebookAI/roberta-base')
             generator_config.num_hidden_layers = 4
-            generator = MaskGenerator.from_pretrained('/data/zs/LLM_Weight/roberta-base', config=generator_config)
+            generator = MaskGenerator.from_pretrained('FacebookAI/roberta-base', config=generator_config)
             
-            codebert_config = RobertaConfig.from_pretrained('/data/zs/LLM_Weight/codebert-base')
+            codebert_config = RobertaConfig.from_pretrained('FacebookAI/codebert-base')
             codebert_config.num_labels = 2
             
             shadow_model = CodeBERTForClassification(codebert_config, generator)
             load_model(shadow_model, os.path.join(args.shadow_path, "model.safetensors"))
             shadow_model.generator = generator
-            # shadow_model.encoder.load_state_dict(torch.load(os.path.join(args.shadow_path, 'rtd_encoder.bin')))
             
             caliberate_model = CodeBERTForClassification(codebert_config, generator)
             load_model(caliberate_model, os.path.join(args.caliberate_path, "model.safetensors"))
             caliberate_model.generator = generator
-            # caliberate_model.encoder.load_state_dict(torch.load(os.path.join(args.caliberate_path, 'rtd_encoder.bin')))
             
             shadow_model.mode = 'rtd'
             caliberate_model.mode = 'rtd'
             sf = NtimesRTDLoss(args, target_tokenizer, shadow_model, data, caliberate_model)
             
         elif args.seq_fea_name.startswith('codet5'):
-            config = T5Config.from_pretrained('/data/zs/LLM_Weight/codet5-base')
+            config = T5Config.from_pretrained('Salesforce/codet5-base')
             config.num_labels = 2
-            tokenizer = AutoTokenizer.from_pretrained('/data/zs/LLM_Weight/codet5-base', add_prefix_space=True)
+            tokenizer = AutoTokenizer.from_pretrained('Salesforce/codet5-base', add_prefix_space=True)
             
             try:
                 target_model = CodeT5ForClassificationAndGeneration.from_pretrained(args.shadow_path, config=config)
@@ -133,20 +123,15 @@ if __name__ == "__main__":
                 sf = Codet5ITLoss(args, tokenizer, target_model, data, caliberate_model)
         
         
-        # breakpoint()
         feature = sf.get_feature()
-        # breakpoint()
         if args.local_rank == -1:
             with open(os.path.join(args.output_path, f'{args.data_name}_{args.seq_fea_name}.npy'), 'wb') as f:
                     pickle.dump(feature, f, protocol=4)
-            # np.save(os.path.join(args.output_path, f'{args.data_name}_{args.seq_fea_name}.npy'), feature, allow_pickle=True)
         else:
             
             with open(os.path.join(args.output_path, f'{args.data_name}_{args.seq_fea_name}_rank{args.local_rank}.npy'), 'wb') as f:
                 pickle.dump(feature, f, protocol=4)
-                
-            # np.save(os.path.join(args.output_path, f'{args.data_name}_{args.seq_fea_name}_rank{args.local_rank}.npy'), feature, allow_pickle=True)
-            
+                            
             torch.distributed.barrier()
             
             if args.local_rank == 0:
@@ -161,7 +146,6 @@ if __name__ == "__main__":
                     dicts.append(item)
                     
                 res = {}
-                # 遍历每个输入字典
                 for d in dicts:
                     for key, value in d.items():
                         if key in res:
@@ -169,7 +153,6 @@ if __name__ == "__main__":
                         else:
                             res[key] = value    
                 
-                # np.save(os.path.join(args.output_path, f'{args.data_name}_{args.seq_fea_name}.npy'), res, allow_pickle=True)
                 with open(os.path.join(args.output_path, f'{args.data_name}_{args.seq_fea_name}.npy'), 'wb') as f:
                     pickle.dump(res, f, protocol=4)
                 

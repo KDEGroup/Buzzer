@@ -65,22 +65,14 @@ def main(args: DictConfig):
     args.mp_num = args.model_parallel_size
     args.dp_num = args.world_size // args.pipe_parallel_size
     
-    # ds_config = read_ds_config(args.deepspeed_config)
     ds_config = args.deepspeed_config
-    # args.num_workers = 2 * args.world_size // args.pipe_parallel_size // args.model_parallel_size
-    # args.batch_size = ds_config.get("train_micro_batch_size_per_gpu", 1)
-    
-    
+
     #TODO: need fix bug, default = 0
     gradient_checkpoint_interval = args.gradient_checkpoint_interval 
 
     set_seed(args.seed)   
     deepspeed.runtime.utils.set_random_seed(args.seed)
     
-    # if args.use_flash_attn:
-    #     logger.info("⚡⚡⚡ enable flash attention.")
-    #     replace_llama_attn_with_flash_attn()
-    #     refine_rope()
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         args.tokenizer.tokenizer_path,

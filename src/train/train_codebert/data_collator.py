@@ -7,10 +7,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 def mask_tokens(inputs, attention_mask, mask_token_index, vocab_size, special_token_indices, mlm_probability=0.15, replace_prob=0.1, orginal_prob=0.1, ignore_index=-100):
-    """ 
-    Prepare masked tokens inputs/labels for masked language modeling: (1-replace_prob-orginal_prob)% MASK, replace_prob% random, orginal_prob% original within mlm_probability% of tokens in the sentence. 
-    * ignore_index in nn.CrossEntropy is default to -100, so you don't need to specify ignore_index in loss
-    """
 
     device = inputs.device
     labels = inputs.clone()

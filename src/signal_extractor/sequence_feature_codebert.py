@@ -32,9 +32,6 @@ class SequenceFeature:
         
         self.data = []
         for line in data:
-            '''
-            code tokens是去除了comment，仅为code，并且做了基本的分词
-            '''
             ct = line['code_tokens']
             if isinstance(ct, str):
                 ct = ct.split(' ')
@@ -96,9 +93,6 @@ class NtimesMLMLoss(SequenceFeature):
         return inputs, labels, mlm_mask
     
     def get_feature_score(self):
-        '''
-        对于每一句话都mask15%的token，而后计算损失，执行100次
-        '''
         special_indices = [self.tokenizer.bos_token_id, self.tokenizer.eos_token_id]
         attention_masks = []
         input_ids_all = []
@@ -165,8 +159,8 @@ class NtimesRTDLoss(SequenceFeature):
         super().__init__(args, tokenizer, encoder, data)
         self.encoder.mode = 'rtd'
         
-        mg_config = RobertaConfig.from_pretrained('/data/zs/LLM_Weight/roberta-base')
-        self.mask_generator = RobertaForMaskedLM.from_pretrained('/data/zs/LLM_Weight/roberta-base', config=mg_config)
+        mg_config = RobertaConfig.from_pretrained('FacebookAI/roberta-base')
+        self.mask_generator = RobertaForMaskedLM.from_pretrained('FacebookAI/roberta-base', config=mg_config)
         self.mask_generator = self.mask_generator.to(self.device)
         self.caliberate_model = caliberate_model
         self.caliberate_model = self.caliberate_model.to(self.device)
@@ -217,9 +211,6 @@ class NtimesRTDLoss(SequenceFeature):
         return loss_
     
     def get_feature_score(self):
-        '''
-        对于每一句话都mask15%的token，而后计算损失，执行100次
-        '''
         special_indices = [self.tokenizer.bos_token_id, self.tokenizer.eos_token_id]
         attention_masks = []
         input_ids_all = []
@@ -262,8 +253,6 @@ class NtimesRTDLoss(SequenceFeature):
                         
                         target_feature_score[self.args.batch_size * batch_idx : self.args.batch_size * batch_idx + bs, idx] = tar_loss_.cpu()
                         caliberate_feature_score[self.args.batch_size * batch_idx : self.args.batch_size * batch_idx + bs, idx] = cal_loss_.cpu()
-                        # data_idx = data_idx.unsqueeze(0)
-                        # breakpoint()
                 
                 data_all_idx.append(data_idx.cpu())
                 

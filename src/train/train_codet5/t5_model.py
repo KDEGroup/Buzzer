@@ -139,8 +139,6 @@ class CodeT5ForClassificationAndGeneration(T5ForConditionalGeneration):
         sequence_output = decoder_outputs[0]
 
         if self.config.tie_word_embeddings:
-            # Rescale output before projecting on vocab
-            # See https://github.com/tensorflow/mesh/blob/fa19d69eafc9a482aff0b59ddd96b025c0cb207d/mesh_tensorflow/transformer/transformer.py#L586
             sequence_output = sequence_output * (self.model_dim**-0.5)
 
         lm_logits = self.lm_head(sequence_output)
@@ -163,9 +161,6 @@ class CodeT5ForClassificationAndGeneration(T5ForConditionalGeneration):
             encoder_attentions=encoder_outputs.attentions,
         )
 
-    '''
-    对应预训练任务中的sequence labeling
-    '''
     def forward_cls(
             self,
             input_ids=None,
@@ -197,15 +192,8 @@ class CodeT5ForClassificationAndGeneration(T5ForConditionalGeneration):
         hidden_states = encoder_outputs[0]
         
         lm_logits = self.sequence_label_classification_head(hidden_states)
-        # # logger.info(labels)
-        # if labels is not None:
-        #     loss_fct = CrossEntropyLoss(ignore_index=-100)
-        #     # move labels to correct device to enable PP
-        #     labels = labels.to(lm_logits.device)
-        #     loss = loss_fct(lm_logits.view(-1, lm_logits.size(-1)), labels.view(-1))
-        
+
         return SequenceClassifierOutput(
-            # loss=loss,
             logits=lm_logits,
             hidden_states=hidden_states
         )

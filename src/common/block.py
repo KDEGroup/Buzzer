@@ -43,10 +43,7 @@ class Attn(nn.Module):
 
 
 def minmax_norm_2d_feature(feature, attention_mask,  min_=None, max_=None, type_='seq'):
-    '''
-    计算attention_mask不为0位置的均值和方差，并归一化。
-    attention_mask为0位置的不做考虑
-    '''
+
     if min_ is None and max_ is None:
         if type_ == 'seq':
             attend_element = torch.masked_select(feature, attention_mask)

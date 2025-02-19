@@ -3,11 +3,11 @@
 for dt in mem_pretrain non_shadow non_calibrate;do
     deepspeed --include localhost:1,2,3,4,5,6 src/train/train_llm/train_ds_pp.py pipe_parallel_size=6 \
         gradient_accumulation_steps=32 model_max_length=2048 per_gpu_train_batch_size=2 \
-        data_name=$dt model_init_path=cache/LLM_Weight/codellama-7b-base-init-ckpt \
+        data_name=$dt model_init_path=codellama/codellama-7b-base-init-ckpt \
         run_name=code_llama_mia_$dt learning_rate=5e-5 save_steps=-1
 done
 
-deepseek_path="/data/zs/LLM_Weight/deepseek-coder-1.3b-base"
+deepseek_path="deepseek-ai/deepseek-coder-1.3b-base"
 CUDA_VISIBLE_DEVICES=1,2 torchrun --nnodes 1 --nproc_per_node 2 --master_port 29502 src/train/train_llm/train_sft.py \
             --model_name_or_path $deepseek_path \
             --tokenizer_path $deepseek_path \

@@ -139,14 +139,3 @@ class CodeCLSTrainer(Trainer):
 
     def set_task(self, task):
         self.task = task
-
-    # def compute_loss(self, model, inputs, return_outputs=False):
-    #     labels = inputs.pop("labels")
-        
-    #     # forward pass
-    #     outputs = model(**inputs)        
-    #     logits = outputs.get("logits")
-    #     loss_fct = torch.nn.CrossEntropyLoss()
-        
-    #     loss = loss_fct(logits.view(-1, logits.size(-1)), labels.view(-1))
-    #     return (loss, logits) if return_outputs else loss

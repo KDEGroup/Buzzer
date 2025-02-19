@@ -184,7 +184,7 @@ if __name__ == "__main__":
         train_non_name = 'wb_non_train'
         train_from = 'target'
         test_from = 'target'
-    elif args.mia_type == 'gb':
+    elif args.mia_type == 'bb':
         train_mem_name = 'non_shadow'
         train_non_name = 'non_utils'
         train_from = 'shadow'

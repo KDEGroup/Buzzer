@@ -24,9 +24,5 @@ Train on shadow model training data, and test on target model testing data.
 
 
 ```shell
-bash ./script/seq_clf_{target_model}.sh
+bash ./script/{target_model}_mia.sh
 ```
-
-## New
-
-Content about DeepseekCoder and CodeLlama can be seen in `LLM_MIA`.

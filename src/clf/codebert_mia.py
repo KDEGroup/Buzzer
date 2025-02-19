@@ -44,18 +44,12 @@ class SignalDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, i):
         if self.mode == 'train':
-            '''
-            训练时返回两个，因为训练目标是增加mem的分数，抑制non的分数
-            '''
             ri = random.randint(0, self.mem_len - 1)
                 
             return self.mem[ri]['mlm_fea'], self.mem[ri]['mlm_att'], self.mem[ri]['rtd_fea'], self.mem[ri]['rtd_att'], \
                 self.non[i]['mlm_fea'], self.non[i]['mlm_att'], self.non[i]['rtd_fea'], self.non[i]['rtd_att']
         
         else:
-            '''
-            测试时或验证时只返回一个，并且带上标签
-            '''
             if i < self.mem_len:
                 return self.mem[i]['mlm_fea'], self.mem[i]['mlm_att'], self.mem[i]['rtd_fea'], self.mem[i]['rtd_att'], self.mem[i]['idx'], 1 
             else:
@@ -123,11 +117,6 @@ class SignalDataset(torch.utils.data.Dataset):
             mem_mlm_attn = mem_mlm_attn.view(bs, -1)
             mem_rtd_attn = mem_rtd_attn.view(bs, -1)
 
-            # mem_length = mem_attn.sum(dim=1).view(-1)  
-              
-            # if self.model_type == 'lstm':
-            #     mem = pack_padded_sequence(mem, mem_length, batch_first=True, enforce_sorted=False)
-
             labels = torch.tensor(labels)
             idx = torch.tensor(idx)
             model_inputs['mem_mlm_input'] = mem_mlm
@@ -167,11 +156,6 @@ class InferenceModel(nn.Module):
         )
     
     def compute_loss(self, mem_logits, non_logits):
-        '''
-        mem_logits [bs, 1] non_logits[bs, 1]
-        
-        '''
-        
         return ((0.5 - mem_logits) + non_logits).clamp(min=1e-6).mean()
     
     
@@ -307,7 +291,7 @@ if __name__ == "__main__":
         train_from = 'target'
         test_from = 'target'
         
-    elif args.mia_type == 'gb':
+    elif args.mia_type == 'bb':
         train_mem_name = 'non_shadow'
         train_non_name = 'non_utils'
         train_from = 'shadow'
@@ -322,21 +306,12 @@ if __name__ == "__main__":
     target_model_root = f'outputs/{target_model}_signals/{target_model}_{train_from}'
     
     model, model_type, feature_type = InferenceModel(args), 'mlp', 'non_seq'
-    '''
-    若为seq，则需要考虑attention mask + padding
-    '''
-    # breakpoint()
-    '''
-    读取特征，此时 mlm是(bs, 100)，其中100是执行100次mlm的loss
-    '''
     mlm_train_mem_feature, mlm_train_non_feature, train_mlm_mem_attn, \
         train_mlm_non_attn, mlm_mem_idx, mlm_non_idx = load_feature_by_name(args, target_model_root, train_mem_name, 
                                                                                 train_non_name, 'ntimes_mlm_loss')
     mlm_mem_idx = mlm_mem_idx.reshape(-1).tolist()
     mlm_non_idx = mlm_non_idx.reshape(-1).tolist()
-    '''
-    由于分显卡抽取特征，所以不同的数据会被分到不同卡上，此时需要使用idx来匹配一个数据的mlm和rtd特征
-    '''
+
     mlm_mem_idx2_fea = {}
     for fea, att, idx in zip(mlm_train_mem_feature, train_mlm_mem_attn, mlm_mem_idx):
         mlm_mem_idx2_fea[idx] = {
@@ -387,9 +362,6 @@ if __name__ == "__main__":
     
     saved_root = os.path.join(args.output_path, args.run_name)
     
-    '''
-    训练分类器
-    '''
     if os.path.exists(saved_root) is False:
         os.makedirs(saved_root)
         
@@ -397,9 +369,6 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load(os.path.join(saved_root, 'best_model.bin')))
     
     
-    '''
-    测试时，无论白盒灰盒都要在target model上进行测试，也就是pre_train
-    '''
     target_model_root = f'outputs/{target_model}_signals/{target_model}_{test_from}'
     
     mlm_test_mem_feature, mlm_test_non_feature, test_mlm_mem_attn, test_mlm_non_attn, mlm_mem_idx, mlm_non_idx = load_feature_by_name(args, target_model_root, test_mem_name, 
